@@ -1,0 +1,24 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17   # pin an exact tag (e.g. 0.8.x-pg17) for reproducibility
+    container_name: pgvector-db
+    environment:
+      POSTGRES_USER: kiran
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the Compose environment}
+      POSTGRES_DB: vector_db
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    shm_size: 1g          # Postgres uses shared memory; helps with index builds
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  pgdata:
